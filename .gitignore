@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual Environment
+venv/
+.env
+
+# Large Data
+data/raw/
+data/processed/
+*.parquet
+*.h5
+*.pkl
+*.joblib
+*.csv
+*.nc
+*.jsonl
+
+# Logs
+logs/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
