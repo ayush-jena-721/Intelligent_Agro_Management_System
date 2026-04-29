@@ -1,0 +1,19 @@
+IMD rainfall
+      +
+Weather data
+      +
+Panchangam data
+        ↓
+MASTER DATASET
+        ↓
+Correlation analysis
+        ↓
+Feature Engineering
+        ↓
+Encoding (circular + categorical)
+        ↓
+Train/Test/Eval split
+        ↓
+Model training
+        ↓
+Prediction

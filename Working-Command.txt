@@ -1,0 +1,27 @@
+## Way to Run the Script
+ source myenv/bin/activate   
+pip install -r requirements.txt
+python -m src.ingestion.imd_extractor
+python -m src.ingestion.openmeteo_fetcher
+python -m src.processing.clean_imd_rainfall
+python -m src.processing.merge_weather_datasets
+python -m src.panchangam.panchangam_generator
+    checking the Data with  "gc data/raw/panchangam_dataset.jsonl | measure-object -line", ----Windows
+                            "wc -l < data/raw/panchangam_dataset.jsonl" ----Linux/Ubuntu
+python -m src.analysis.climate_panchang_analysis
+python -m src.analysis.rainfall_cycle_detector
+python -m src.processing.merge_datasets
+python -m src.processing.clean_dataset
+python -m src.analysis.correlation_analysis
+python -m src.features.feature_engineering
+python -m src.models.train_xgboost
+python -m src.models.verify_pipeline
+python -m src.models.backtest_models
+python -m src.models.lstm_hybrid_rainfall
+python -m src.predict.predict_rainfall
+python -m src.predict.predict_engine
+python -m src.predict.live_feature_engine
+python -m src.utils.checker_features  ----- for checking the model
+---------------------------------------------
+uvicorn src.api.app:app --reload
+streamlit run src/webapp/app.py
