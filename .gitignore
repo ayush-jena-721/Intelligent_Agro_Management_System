@@ -7,7 +7,10 @@ __pycache__/
 # Virtual Environment
 venv/
 .env
-
+# Virtual Environment
+myenv/
+venv/
+.env
 # Large Data
 data/raw/
 data/processed/
