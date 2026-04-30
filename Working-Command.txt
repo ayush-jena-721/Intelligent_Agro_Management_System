@@ -25,3 +25,13 @@ python -m src.utils.checker_features  ----- for checking the model
 ---------------------------------------------
 uvicorn src.api.app:app --reload
 streamlit run src/webapp/app.py
+
+
+-----------------------------------------------------
+for adding  the update what i did to git repos at same time.
+---------------------------------------------------
+git add . && \
+git commit -m "Updated project progress" && \
+git push origin Aj && \
+git push personal Aj:Dev
+============================================
