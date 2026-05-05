@@ -1479,7 +1479,7 @@ def get_ai_decision_firestore():
 # AI IRRIGATION DECISION ENGINE
 # ═══════════════════════════════════════════════════════════════
 DRY_THRESHOLD = 30
-WET_THRESHOLD = 60
+WET_THRESHOLD = 80
 RAIN_THRESHOLD = 5.0
 HOT_THRESHOLD = 35
 
@@ -2047,13 +2047,13 @@ st.markdown('<div class="animated-bg"></div>', unsafe_allow_html=True)
 st.markdown("""
 <h1>🌾 MEGHDRISTI</h1>
 <p style='text-align:center; color:#88ccff; font-size:1.2rem; margin-bottom:10px; font-family: Cinzel, serif; letter-spacing: 3px;'>
-    AI-POWERED WEATHER INTELLIGENCE & SMART AGRICULTURE
+     WEATHER INTELLIGENCE & SMART AGRICULTURE
 </p>
 <div style="text-align:center; font-size:2rem; margin:10px 0; opacity:0.6;">☸ ✦ 🌙 ✦ ☸</div>
 """, unsafe_allow_html=True)
 
 current_time = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
-st.markdown(f'<div class="timestamp">◈ SYSTEM TIME: {current_time} ◈ AUTO-REFRESH: 30s ◈ AI ENGINE ACTIVE ◈</div>', unsafe_allow_html=True)
+st.markdown(f'<div class="timestamp">◈ SYSTEM TIME: {current_time} ◈ AUTO-REFRESH: 30s ◈ ENGINE ACTIVE ◈</div>', unsafe_allow_html=True)
 
 CUTOFF_DATE = pd.Timestamp("2026-01-01")
 
@@ -2063,7 +2063,7 @@ with st.sidebar:
     <div style='text-align:center; margin-bottom:20px; padding:20px; background:rgba(0,195,255,0.1); border-radius:15px; border:1px solid rgba(0,195,255,0.3);'>
         <div style='font-size:3rem; margin-bottom:10px;'>🌾</div>
         <h3 style='color:#00c3ff; margin:0; font-family:Orbitron;'>CONTROL PANEL</h3>
-        <p style='color:#88ccff; font-size:0.8rem; margin:5px 0;'>AI Irrigation • Rain Prediction • Panchang Intelligence</p>
+        <p style='color:#88ccff; font-size:0.8rem; margin:5px 0;'>IoT Irrigation • Rain Prediction • Panchang Intelligence</p>
     </div>
     """, unsafe_allow_html=True)
 
