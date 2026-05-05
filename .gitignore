@@ -5,22 +5,21 @@ __pycache__/
 *.pyd
 
 # Virtual Environment
-venv/
-.env
-# Virtual Environment
 myenv/
 venv/
 .env
-# Large Data
+
+# Large Data Files (but keep models for cloud deployment)
 data/raw/
-data/processed/
+# data/processed/
 *.parquet
-*.h5
-*.pkl
-*.joblib
-*.csv
+# *.csv
 *.nc
-*.jsonl
+# *.jsonl
+# Uncomment below if models are < 100MB:
+# *.h5
+# *.pkl
+# *.joblib
 
 # Logs
 logs/
@@ -31,5 +30,3 @@ logs/
 
 # OS
 .DS_Store
-myenv/
-venv/
