@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeghDristi - Phone Notifications</title>
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #050a14, #0d1f35);
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .logo { font-size: 4rem; margin: 20px 0; }
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(90deg, #00c3ff, #00ff96);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .card {
+            background: rgba(0, 195, 255, 0.1);
+            border: 1px solid rgba(0, 195, 255, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px 0;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+        .btn {
+            background: linear-gradient(135deg, #00c3ff, #0077ff);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin: 10px 0;
+            transition: all 0.3s;
+        }
+        .btn:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(0,195,255,0.5); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-size: 0.95rem;
+        }
+        .status.success { background: rgba(0, 255, 150, 0.2); border: 1px solid #00ff96; color: #00ff96; }
+        .status.error { background: rgba(255, 51, 51, 0.2); border: 1px solid #ff3333; color: #ff3333; }
+        .status.info { background: rgba(0, 195, 255, 0.2); border: 1px solid #00c3ff; color: #00c3ff; }
+        .token-box {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            word-break: break-all;
+            margin: 10px 0;
+            color: #88ccff;
+        }
+        .features {
+            text-align: left;
+            margin: 20px 0;
+        }
+        .features li {
+            margin: 10px 0;
+            color: #88ccff;
+            list-style: none;
+        }
+        .features li::before {
+            content: "✓ ";
+            color: #00ff96;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo">🌾</div>
+    <h1>MEGHDRISTI</h1>
+    <p style="color:#88ccff; text-align:center; margin-bottom:30px;">
+        Get FREE field alerts on your phone<br>
+        No app install needed!
+    </p>
+
+    <div class="card">
+        <h3 style="color:#ffd700; margin-top:0;">📱 Enable Notifications</h3>
+        <ul class="features">
+            <li>Irrigation pump ON/OFF alerts</li>
+            <li>Rain prediction warnings</li>
+            <li>Critical soil moisture alerts</li>
+            <li>Daily field summary</li>
+            <li>Works even when browser is closed</li>
+        </ul>
+        
+        <button class="btn" id="enableBtn" onclick="requestPermission()">
+            🔔 Enable Phone Notifications
+        </button>
+        
+        <div id="status" class="status info" style="display:none;"></div>
+        
+        <div id="tokenSection" style="display:none;">
+            <p style="color:#88ccff; font-size:0.9rem;">Your Device Token:</p>
+            <div class="token-box" id="tokenDisplay"></div>
+            <button class="btn" onclick="copyToken()">📋 Copy Token</button>
+            <p style="color:#88ccff; font-size:0.85rem; margin-top:15px;">
+                Paste this token in the Streamlit sidebar to register
+            </p>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+        <h3 style="color:#00c3ff; margin-top:0;">ℹ️ How It Works</h3>
+        <p style="color:#88ccff; font-size:0.9rem; line-height:1.6;">
+            1. Click "Enable" above<br>
+            2. Allow notification permission<br>
+            3. Copy the token shown<br>
+            4. Paste in MeghDristi dashboard sidebar<br>
+            5. Done! You'll get alerts like government SMS
+        </p>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js"></script>
+
+    <script>
+        // Your Firebase config (same as your project)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDH9GJ6Mlya2_3-RBQhvcZMdkB5CnWbrLo",
+            authDomain: "megh-dristi.firebaseapp.com",
+            databaseURL: "https://megh-dristi-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "megh-dristi",
+            storageBucket: "megh-dristi.firebasestorage.app",
+            messagingSenderId: "356932827712",
+            appId: "1:356932827712:web:a3002d53fa8c47c1b4bda5"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const messaging = firebase.messaging();
+
+        async function requestPermission() {
+            const btn = document.getElementById('enableBtn');
+            const status = document.getElementById('status');
+            const tokenSection = document.getElementById('tokenSection');
+            
+            btn.disabled = true;
+            btn.textContent = "⏳ Requesting...";
+            
+            try {
+                const permission = await Notification.requestPermission();
+                
+                if (permission === 'granted') {
+                    // Get FCM token
+                    const token = await messaging.getToken({
+                        vapidKey: 'YOUR_VAPID_KEY'  // For web push
+                    });
+                    
+                    status.className = 'status success';
+                    status.textContent = '✅ Notifications enabled! Copy token below.';
+                    status.style.display = 'block';
+                    
+                    document.getElementById('tokenDisplay').textContent = token;
+                    tokenSection.style.display = 'block';
+                    
+                    btn.textContent = "✅ Enabled";
+                    
+                    // Auto-copy for convenience
+                    navigator.clipboard.writeText(token);
+                    
+                } else {
+                    status.className = 'status error';
+                    status.textContent = '❌ Permission denied. Please allow notifications in browser settings.';
+                    status.style.display = 'block';
+                    btn.disabled = false;
+                    btn.textContent = "🔄 Try Again";
+                }
+                
+            } catch (err) {
+                status.className = 'status error';
+                status.textContent = '❌ Error: ' + err.message;
+                status.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = "🔄 Try Again";
+            }
+        }
+
+        function copyToken() {
+            const token = document.getElementById('tokenDisplay').textContent;
+            navigator.clipboard.writeText(token);
+            
+            const status = document.getElementById('status');
+            status.className = 'status success';
+            status.textContent = '✅ Token copied! Paste in Streamlit sidebar now.';
+            status.style.display = 'block';
+        }
+
+        // Handle foreground messages
+        messaging.onMessage((payload) => {
+            console.log('Message received:', payload);
+            
+            // Show custom notification
+            if (Notification.permission === 'granted') {
+                new Notification(payload.notification.title, {
+                    body: payload.notification.body,
+                    icon: '/icon-192x192.png',
+                    badge: '/badge-72x72.png',
+                    tag: payload.data?.type || 'general',
+                    requireInteraction: payload.data?.type === 'critical',
+                    data: payload.data
+                });
+            }
+        });
+    </script>
+</body>
+</html>

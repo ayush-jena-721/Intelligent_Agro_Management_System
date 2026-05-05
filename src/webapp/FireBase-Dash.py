@@ -763,7 +763,7 @@
 #             hum = float(re.search(r'Humidity: ([\d.]+)', html_text).group(1)) if re.search(r'Humidity: ([\d.]+)', html_text) else 0
 #             data = {"part1": part1, "part2": part2, "temperature": temp, "humidity": hum}
 
-#         pump_status = "ON" if (data.get("part1", 100) < 30 or data.get("part2", 100) < 30) else "OFF"
+#         pump_status = "OFF" if (data.get("part1", 0) >= 75 and data.get("part2", 0) >= 75) else "ON"
 
 #         return {
 #             "soil_moisture": data.get("part1", 0),
@@ -1318,7 +1318,14 @@ from webapp.weather_fetcher import fetch_current_weather
 from webapp.panchang_loader import load_panchang, get_panchang_for_date, merge_with_weather
 from webapp.predictor import load_model, predict_rain
 from webapp.panchang_mapper import map_panchang_names
+# ═══════════════════════════════════════════════════════════════
+# IMPORTS (add at top with other imports)
+# ═══════════════════════════════════════════════════════════════
 
+from webapp.FCM_notifier import (
+    fcm_irrigation, fcm_weather, fcm_critical, fcm_daily,
+    register_fcm_token, fcm_test, get_fcm
+)
 # ---------------- FIRESTORE SETUP ----------------
 try:
     import firebase_admin
@@ -1398,6 +1405,11 @@ def get_sensor_data_firestore():
             "source": "firestore",
             "raw_data": data
         }
+        # Auto pump logic: only turn pump OFF when both sensor readings are at 85% or higher
+        if sensor_data["soil_moisture"] >= 85 and sensor_data["soil_moisture2"] >= 75:
+            sensor_data["pump_status"] = "OFF"
+        else:
+            sensor_data["pump_status"] = "ON"
         return sensor_data
     except Exception as e:
         return {
@@ -1814,11 +1826,11 @@ if 'ai_decision' not in st.session_state:
 
 # ---------------- AUTO REFRESH ----------------
 st.markdown("""
-<meta http-equiv="refresh" content="15">
+<meta http-equiv="refresh" content="30">
 <script>
     setTimeout(function(){
         window.location.reload();
-    }, 15000);
+    }, 30000);
 </script>
 """, unsafe_allow_html=True)
 
@@ -2041,7 +2053,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 current_time = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
-st.markdown(f'<div class="timestamp">◈ SYSTEM TIME: {current_time} ◈ AUTO-REFRESH: 15s ◈ AI ENGINE ACTIVE ◈</div>', unsafe_allow_html=True)
+st.markdown(f'<div class="timestamp">◈ SYSTEM TIME: {current_time} ◈ AUTO-REFRESH: 30s ◈ AI ENGINE ACTIVE ◈</div>', unsafe_allow_html=True)
 
 CUTOFF_DATE = pd.Timestamp("2026-01-01")
 
@@ -2086,7 +2098,7 @@ with st.sidebar:
     st.caption(f"Collection: {FIRESTORE_COLLECTION}")
     st.markdown("---")
 
-    st.session_state.auto_refresh = st.checkbox("Auto Refresh (15s)", value=True)
+    st.session_state.auto_refresh = st.checkbox("Auto Refresh (30s)", value=True)
     if st.button("🔄 Force Refresh", use_container_width=True):
         st.rerun()
 
@@ -2132,6 +2144,81 @@ with st.sidebar:
         manual_pump = st.selectbox("Pump Control", ["OFF", "ON", "MEDIUM"])
         if st.button("💧 Apply Manual Command", use_container_width=True):
             st.success(f"Manual mode: {manual_pump} (implement send function)")
+
+# ═══════════════════════════════════════════════════════════════
+# SIDEBAR — Add FCM Phone Registration (add inside sidebar block)
+# ═══════════════════════════════════════════════════════════════
+
+with st.sidebar:
+    st.markdown("---")
+    st.header("📱 Phone Notifications (FCM)")
+    
+    # FCM Token Registration
+    with st.expander("🔗 Register Your Phone", expanded=False):
+        st.markdown("""
+        <div style="font-size:0.85rem; color:#88ccff; margin-bottom:10px;">
+        Get FREE push notifications on your phone.<br>
+        No app install needed — works in browser too!
+        </div>
+        """, unsafe_allow_html=True)
+        
+        farmer_id = st.text_input("Farmer ID", value="farmer_1", key="fcm_user")
+        fcm_token = st.text_input(
+            "FCM Token (from phone/browser)",
+            type="password",
+            key="fcm_token",
+            help="Get this by allowing notifications in your mobile browser"
+        )
+        device_name = st.text_input("Device Name", value="My Phone", key="fcm_device")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("✅ Register", use_container_width=True, key="btn_register"):
+                if fcm_token and len(fcm_token) > 20:
+                    success = register_fcm_token(fcm_token, farmer_id, device_name)
+                    if success:
+                        st.success("Phone registered! 🎉")
+                    else:
+                        st.error("Registration failed")
+                else:
+                    st.warning("Enter valid FCM token")
+        
+        with col2:
+            if st.button("🧪 Test", use_container_width=True, key="btn_test"):
+                if fcm_token and len(fcm_token) > 20:
+                    result = fcm_test(fcm_token)
+                    if result.status == "sent":
+                        st.success(f"Test sent! Check your phone 📲")
+                    else:
+                        st.error(f"Test failed: {result.errors}")
+                else:
+                    st.warning("Enter token first")
+    
+    # Notification Settings
+    st.markdown("---")
+    st.header("🔔 FCM Alert Settings")
+    
+    fcm_irrigation_toggle = st.toggle("Irrigation Decisions", value=True, key="fcm_irr")
+    fcm_weather_toggle = st.toggle("Weather Alerts", value=True, key="fcm_wx")
+    fcm_critical_toggle = st.toggle("Critical Alerts", value=True, key="fcm_crit")
+    fcm_daily_toggle = st.toggle("Daily Summary (8AM)", value=False, key="fcm_daily")
+    
+    st.session_state.fcm_settings = {
+        "irrigation": fcm_irrigation_toggle,
+        "weather": fcm_weather_toggle,
+        "critical": fcm_critical_toggle,
+        "daily": fcm_daily_toggle
+    }
+    
+    # Show registered devices count
+    try:
+        tokens = get_fcm().get_active_tokens()
+        if tokens:
+            st.caption(f"📲 {len(tokens)} device(s) registered")
+        else:
+            st.caption("⚠️ No devices registered yet")
+    except:
+        pass
 
 # ---------------- MODEL & DATA ----------------
 @st.cache_resource
@@ -2340,6 +2427,54 @@ if True:
                     {explanations['combined']}
                 </div>
                 """, unsafe_allow_html=True)
+            # ═══════════════════════════════════════════════════════════════
+            # MAIN DASHBOARD — Add FCM sends after AI decision
+            # ═══════════════════════════════════════════════════════════════
+
+            # Inside your main try block, AFTER AI decision is made and stored:
+
+            # 1. FCM Notification — Irrigation Decision
+            if st.session_state.get('fcm_settings', {}).get('irrigation', True):
+                fcm_result = fcm_irrigation(
+                    pump_action=pump_action,
+                    reason=reason,
+                    sensor_data=sensor,
+                    confidence=confidence
+                )
+                
+                # Show FCM status in UI
+                if fcm_result.status == "sent" and fcm_result.success_count > 0:
+                    st.toast(f"📲 Push notification sent! ({fcm_result.success_count} devices)", icon="📱")
+                elif fcm_result.status == "no_tokens":
+                    st.info("ℹ️ No phone registered for notifications. Use sidebar to register.")
+                elif fcm_result.status == "error":
+                    st.warning(f"⚠️ Notification error: {fcm_result.errors[0] if fcm_result.errors else 'Unknown'}")
+
+            # 2. FCM — Weather Alert for significant conditions
+            if st.session_state.get('fcm_settings', {}).get('weather', True):
+                if prediction > 10 or (prediction < 2 and latest.get('temperature_2m', 28) > 35):
+                    fcm_weather(
+                        prediction=prediction,
+                        panchang_data=st.session_state.panchang,
+                        weather_data=st.session_state.weather
+                    )
+
+            # 3. FCM — Critical sensor alerts
+            if st.session_state.get('fcm_settings', {}).get('critical', True):
+                if sensor.get('soil_moisture', 100) < 20:
+                    fcm_critical("soil_dry", sensor)
+                if sensor.get('soil_moisture2', 100) < 20:
+                    fcm_critical("soil_dry", sensor)
+                if sensor.get('soil_temp', 0) > 45:
+                    fcm_critical("temp_extreme", sensor)
+                if sensor.get('connection') == "offline":
+                    fcm_critical("connection_lost", sensor)
+
+            # 4. Also write AI decision to Firestore (your existing code, enhanced)
+            write_ai_decision_firestore(pump_action, reason, details, confidence)
+
+            # NEW: Also send to FCM topic for broadcast (optional)
+            # get_fcm().send_to_topic("all_farmers", title, body, data, priority)
 
             # PANCHANG
             st.markdown("""
