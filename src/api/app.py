@@ -50,6 +50,8 @@ import pandas as pd
 
 from src.predict.predict_engine import generate_forecast
 
+print("Starting MeghDristi API...")
+
 app = FastAPI(title="MeghDristi Weather API 🌧")
 
 app.add_middleware(
@@ -59,6 +61,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+print("API initialized successfully.")
 
 @app.get("/")
 def home():
