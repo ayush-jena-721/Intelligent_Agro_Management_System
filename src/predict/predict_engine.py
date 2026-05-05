@@ -4,11 +4,18 @@ import joblib
 from datetime import datetime, timedelta
 
 # ---------------------------------------
-# LOAD MODEL
+# LOAD MODEL (LAZY LOADING)
 # ---------------------------------------
 
 MODEL_PATH = "models/lightgbm_rainfall_model.pkl"
-model = joblib.load(MODEL_PATH)
+model = None
+
+def get_model():
+    global model
+    if model is None:
+        model = joblib.load(MODEL_PATH)
+        print("Model loaded successfully.")
+    return model
 
 print("\n====== MEGHDRISTI PREDICTION ENGINE (v2) ======\n")
 
@@ -54,6 +61,7 @@ def align_features(input_df: pd.DataFrame) -> pd.DataFrame:
     Ensures incoming data matches training features exactly
     """
 
+    model = get_model()
     required_features = model.feature_name_
 
     for col in required_features:
@@ -69,6 +77,7 @@ def align_features(input_df: pd.DataFrame) -> pd.DataFrame:
 
 def predict_rain(features_df: pd.DataFrame) -> float:
 
+    model = get_model()
     X = align_features(features_df.copy())
 
     pred = model.predict(X)[0]
