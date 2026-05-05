@@ -16,7 +16,7 @@ def load_panchang():
 
     df = pd.DataFrame(records)
 
-    df["date"] = pd.to_datetime(df["date"]).dt.floor("H")
+    df["date"] = pd.to_datetime(df["date"]).dt.floor("h")
     print(df.head())
     print(df.columns)
 

@@ -30,6 +30,6 @@ def fetch_current_weather(lat, lon):
         "precipitation": data["hourly"]["precipitation"]
     })
 
-    df["date"] = pd.to_datetime(df["date"]).dt.floor("H")
+    df["date"] = pd.to_datetime(df["date"]).dt.floor("h")
 
     return df.iloc[[-1]]  # latest only
