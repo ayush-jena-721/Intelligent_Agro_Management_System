@@ -17,9 +17,11 @@ data/raw/
 *.nc
 # *.jsonl
 # Uncomment below if models are < 100MB:
-# *.h5
-# *.pkl
-# *.joblib
+*.h5
+*.pkl
+*.joblib
+*.json
+
 
 # Logs
 logs/
