@@ -14,12 +14,14 @@ from typing import Optional, Dict, List, Any
 try:
     import firebase_admin
     from firebase_admin import credentials, firestore
+    from google.cloud.firestore import FieldFilter
     FIRESTORE_AVAILABLE = True
 except ImportError:
     FIRESTORE_AVAILABLE = False
     firebase_admin = None
     credentials = None
     firestore = None
+    FieldFilter = None
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -396,7 +398,7 @@ def get_pending_pump_commands_firestore() -> List[Dict[str, Any]]:
             return []
         
         commands_ref = db.collection(FIRESTORE_COMMANDS_COLLECTION)
-        docs = commands_ref.where("status", "==", "pending").order_by("timestamp").stream()
+        docs = commands_ref.where(FieldFilter("status", "==", "pending")).order_by("timestamp").stream()
         
         command_list = []
         for doc in docs:
