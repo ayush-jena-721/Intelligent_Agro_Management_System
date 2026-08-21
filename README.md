@@ -635,7 +635,10 @@ The IoT phase additionally requires the demonstrated ESP32, sensor setup, networ
 
 ```bash
 git clone https://github.com/aiat-college/sdml23-project12.git
+or 
+git clone https://github.com/ayush-jena-721/Intelligent_Agro_Management_System.git
 cd sdml23-project12
+cd Intelligent_Agro_Management_System
 ```
 
 ## 2. Create a Virtual Environment
